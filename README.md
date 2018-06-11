@@ -1,6 +1,6 @@
 ---
 path: "/sdk"
-version: "0.2.4"
+version: "0.2.5"
 ---
 
 # Radar Relay SDK
