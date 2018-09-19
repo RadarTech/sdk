@@ -23,7 +23,7 @@ If you're adding a new public function/member, make sure you document it with Ja
 
 We use [TSLint](https://palantir.github.io/tslint/) with [custom configs](https://github.com/0xProject/0x-monorepo/tree/development/packages/tslint-config) to keep our code style consistent.
 
-To lint your code just run: `yarn lint`
+To lint your code just run: `npm run lint`
 
 If using the Atom text editor, we recommend you install the following packages:
 

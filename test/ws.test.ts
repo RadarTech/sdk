@@ -35,7 +35,7 @@ describe.skip('RadarRelay.Ws', () => {
 
     await new Promise(async (resolve, reject) => {
 
-      const zrxWethMarket = rrsdk.markets.get('ZRX-WETH');
+      const zrxWethMarket = await rrsdk.markets.get('ZRX-WETH');
 
       const subscription = await zrxWethMarket.subscribeAsync(WebsocketRequestTopic.BOOK, mssg => {
         console.log(mssg);

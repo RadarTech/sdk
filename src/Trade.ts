@@ -16,19 +16,16 @@ export class Trade<T extends BaseAccount> {
   private _account: T;
   private _zeroEx: ZeroEx;
   private _events: EventEmitter;
-  private _tokens: TSMap<string, RadarToken>;
 
   constructor(
     zeroEx: ZeroEx,
     apiEndpoint: string,
     account: T,
-    events: EventEmitter,
-    tokens: TSMap<string, RadarToken>) {
+    events: EventEmitter) {
     this._zeroEx = zeroEx;
     this._endpoint = apiEndpoint;
     this._account = account;
     this._events = events;
-    this._tokens = tokens;
   }
 
   public async marketOrder(

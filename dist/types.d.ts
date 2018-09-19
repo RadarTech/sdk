@@ -8,8 +8,8 @@ import { RpcAccount } from './accounts/RpcAccount';
 import { InjectedAccount } from './accounts/InjectedAccount';
 import { Ethereum } from './Ethereum';
 import { EventEmitter } from 'events';
-import { TSMap } from 'typescript-map';
 import { RadarToken } from '@radarrelay/types';
+import { LoadableMap } from './LoadableMap';
 export * from '@radarrelay/types';
 export interface SdkConfig {
     sdkInitializationTimeoutMs?: number;
@@ -94,5 +94,5 @@ export interface AccountParams {
     events: EventEmitter;
     zeroEx: ZeroEx;
     endpoint: string;
-    tokens: TSMap<string, RadarToken>;
+    tokens: LoadableMap<string, RadarToken>;
 }

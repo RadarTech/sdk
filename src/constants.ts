@@ -4,8 +4,8 @@ export const RADAR_RELAY_ENDPOINTS = (network: NetwordId): EndpointConfig => {
   switch (network) {
     case NetwordId.Mainnet:
       return {
-        radarRestEndpoint: 'https://api-beta.rrdev.io/v2',
-        radarWebsocketEndpoint: 'wss://api-beta.rrdev.io/v2'
+        radarRestEndpoint: 'https://api.radarrelay.com/v2',
+        radarWebsocketEndpoint: 'wss://ws.radarrelay.com/v2'
       };
     case NetwordId.Kovan:
       return {

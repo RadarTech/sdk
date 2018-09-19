@@ -12,14 +12,13 @@ import {
 } from './types';
 import BigNumber from 'bignumber.js';
 import request = require('request-promise');
-import { TSMap } from 'typescript-map';
 import Web3 = require('web3');
 
 // SDK Classes
 import { SdkInitLifeCycle, InitPriorityItem } from './SdkInitLifeCycle';
-import { EventBus } from './EventEmitter';
 import { Ethereum } from './Ethereum';
 import { Market } from './Market';
+import { LoadableMap } from './LoadableMap';
 import { Trade } from './Trade';
 import { RADAR_RELAY_ENDPOINTS } from './constants';
 import { BaseAccount } from './accounts/BaseAccount';
@@ -31,10 +30,10 @@ BigNumber.config({ EXPONENTIAL_AT: 1e+9 });
  */
 export class RadarRelay<T extends BaseAccount> {
 
-  public events: EventBus;
+  public events: EventEmitter;
   public account: T;
-  public tokens: TSMap<string, RadarToken>;
-  public markets: TSMap<string, Market<T>>;
+  public tokens: LoadableMap<string, RadarToken>;
+  public markets: LoadableMap<string, Market<T>>;
   public zeroEx: ZeroEx;
   public web3: Web3;
 
@@ -42,7 +41,6 @@ export class RadarRelay<T extends BaseAccount> {
   private _ethereum: Ethereum;
   private _networkId: number;
   private _prevApiEndpoint: string;
-  private _markets: RadarMarket[];
   private _lifecycle: SdkInitLifeCycle;
   private _wallet: new (params: AccountParams) => T;
   private _config: Config;
@@ -56,34 +54,19 @@ export class RadarRelay<T extends BaseAccount> {
    * This list is configurable if additional init methods are necessary
    */
   private loadPriorityList: InitPriorityItem[] = [
-    {
-      event: EventName.EthereumInitialized,
-      func: this.initEthereumNetworkIdAsync
-    }, {
-      event: EventName.EthereumNetworkIdInitialized,
-      func: this.initZeroEx
-    }, {
-      event: EventName.ZeroExInitialized,
-      func: this.initTokensAsync
-    }, {
-      event: EventName.TokensInitialized,
-      func: this.initAccountAsync,
-      args: [0] // pass default account of 0 to setAccount
-    }, {
-      event: EventName.AccountInitialized,
-      func: this.initTrade
-    }, {
-      event: EventName.TradeInitialized,
-      func: this.initMarketsAsync
-    }, {
-      event: EventName.MarketsInitialized,
-      func: undefined
-    }];
+    { event: EventName.EthereumInitialized, func: this.initEthereumNetworkIdAsync },
+    { event: EventName.EthereumNetworkIdInitialized, func: this.initZeroEx },
+    { event: EventName.ZeroExInitialized, func: this.initTokensAsync },
+    { event: EventName.TokensInitialized, func: this.initAccountAsync, args: [0] }, // Pass default account of 0 to setAccount(...)
+    { event: EventName.AccountInitialized, func: this.initTrade },
+    { event: EventName.TradeInitialized, func: this.initMarketsAsync },
+    { event: EventName.MarketsInitialized, func: undefined }
+  ];
 
   /**
    * SDK instance
    *
-   * @param {RadarRelayConfig}  config  sdk config
+   * @param {RadarRelayConfig} config  sdk config
    */
   constructor(wallet: new (params: AccountParams) => T, walletType: WalletType, config: Config) {
     this._wallet = wallet;
@@ -104,7 +87,7 @@ export class RadarRelay<T extends BaseAccount> {
   /**
    * Initialize the SDK
    *
-   * @param {Config}  config  The wallet configuration
+   * @param {Config} config The wallet configuration
    */
   public async initializeAsync(): Promise<RadarRelay<T>> {
     await this._ethereum.setProvider(this._walletType, this._config);
@@ -118,7 +101,7 @@ export class RadarRelay<T extends BaseAccount> {
     return this;
   }
 
-  // --- not user configurable below this line --- //
+  // --- Not user configurable below this line --- //
 
   private async initAccountAsync(address: string | number): Promise<string | boolean> {
     await this._ethereum.setDefaultAccount(address);
@@ -145,36 +128,31 @@ export class RadarRelay<T extends BaseAccount> {
   }
 
   private initTrade(): Promise<string | boolean> {
-    this._trade = new Trade<T>(this.zeroEx, this._config.radarRestEndpoint, this.account, this.events, this.tokens);
+    this._trade = new Trade<T>(this.zeroEx, this._config.radarRestEndpoint, this.account, this.events);
     return this.getCallback(EventName.TradeInitialized, this._trade);
   }
 
   private async initTokensAsync(): Promise<string | boolean> {
-    // only fetch if not already fetched
+    // Only fetch if not already fetched
     if (this._prevApiEndpoint !== this._config.radarRestEndpoint) {
       const tokens: RadarToken[] = JSON.parse(await request.get(`${this._config.radarRestEndpoint}/tokens`));
-      this.tokens = new TSMap();
-      tokens.map(token => {
-        this.tokens.set(token.address, token);
+      this.tokens = new LoadableMap({
+        entries: tokens.map(token => [token.address, token]) as Array<[string, RadarToken]>,
       });
+      tokens.map(token => this.tokens.set(token.address, token));
     }
-    // todo index by address
+
+    // TODO: index by address
     return this.getCallback(EventName.TokensInitialized, this.tokens);
   }
 
   private async initMarketsAsync(): Promise<string | boolean> {
-    // only fetch if not already fetched
-    if (this._prevApiEndpoint !== this._config.radarRestEndpoint) {
-      // TODO lazy load these!
-      this._markets = JSON.parse(await request.get(`${this._config.radarRestEndpoint}/markets?perPage=100`));
-    }
-    // TODO probably not the best place for this
-    this._prevApiEndpoint = this._config.radarRestEndpoint;
-    this.markets = new TSMap();
-    this._markets.map(market => {
-      this.markets.set(market.id, new Market(
-        market, this._config.radarRestEndpoint, this._config.radarWebsocketEndpoint, this._trade
-      ));
+    this.markets = new LoadableMap({
+      getHandler: async ({ key }) => {
+        const response = await request.get(`${this._config.radarRestEndpoint}/markets/${key}`);
+        const market: RadarMarket = JSON.parse(response);
+        return new Market(market, this._config.radarRestEndpoint, this._config.radarWebsocketEndpoint, this._trade);
+      }
     });
 
     return this.getCallback(EventName.MarketsInitialized, this.markets);

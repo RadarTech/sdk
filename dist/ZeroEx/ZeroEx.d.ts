@@ -1,15 +1,11 @@
 import { Provider, ContractWrappersConfig, ExchangeWrapper, EtherTokenWrapper, ERC20TokenWrapper, ERC20ProxyWrapper, Order, SignedOrder, SignerType, ERC721TokenWrapper } from '0x.js';
 import BigNumber from 'bignumber.js';
-/**
- * This class includes all the functionality related to 0x packages instantiation
- */
 export declare class ZeroEx {
     exchange: ExchangeWrapper;
     erc20Token: ERC20TokenWrapper;
     etherToken: EtherTokenWrapper;
     erc20Proxy: ERC20ProxyWrapper;
     erc721Token: ERC721TokenWrapper;
-    private _initialized;
     private readonly _provider;
     private readonly _contractWrappers;
     private readonly _web3WrapperInstance;
@@ -17,12 +13,6 @@ export declare class ZeroEx {
     private readonly _zrxAssetData;
     private readonly _orderValidationUtils;
     private readonly _exchangeTransferSimulator;
-    /**
-     * Instantiate ZeroEx
-     * @public
-     * @param Provider  provider  Web3 Provider instance to use
-     * @param ContractWrappersConfig  config  Should contain for example desired networkId
-     */
     constructor(provider: Provider, config: ContractWrappersConfig);
     /**
      * When creating an order without a specified taker or feeRecipient you must supply the Solidity

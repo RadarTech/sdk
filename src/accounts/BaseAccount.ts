@@ -8,6 +8,7 @@ import * as request from 'request-promise';
 import { RadarFill, RadarSignedOrder, RadarToken } from '@radarrelay/types';
 import { TSMap } from 'typescript-map';
 import { EventEmitter } from 'events';
+import { LoadableMap } from '../LoadableMap';
 
 export class BaseAccount {
   public readonly type: WalletType;
@@ -16,7 +17,7 @@ export class BaseAccount {
   protected _events: EventEmitter;
   private _zeroEx: ZeroEx;
   private _endpoint: string;
-  private _tokens: TSMap<string, RadarToken>;
+  private _tokens: LoadableMap<string, RadarToken>;
 
   /**
    * Instantiate a new BaseAccount
@@ -122,7 +123,7 @@ export class BaseAccount {
    */
   public async getTokenBalanceAsync(tokenAddress: string): Promise<BigNumber> {
     const balance = await this._zeroEx.erc20Token.getBalanceAsync(tokenAddress, this.address);
-    return ZeroEx.toUnitAmount(balance, this._tokens.get(tokenAddress).decimals);
+    return ZeroEx.toUnitAmount(balance, (await this._tokens.get(tokenAddress)).decimals);
   }
 
   /**
@@ -140,7 +141,7 @@ export class BaseAccount {
       opts = {};
     }
 
-    const amt = ZeroEx.toBaseUnitAmount(amount, this._tokens.get(tokenAddress).decimals);
+    const amt = ZeroEx.toBaseUnitAmount(amount, (await this._tokens.get(tokenAddress)).decimals);
     const txHash = await this._zeroEx.erc20Token.transferAsync(tokenAddress, this.address, toAddress, amt, opts.transactionOpts);
     if (!opts.awaitTransactionMined) {
       return txHash;
@@ -155,7 +156,7 @@ export class BaseAccount {
    */
   public async getTokenAllowanceAsync(tokenAddress: string): Promise<BigNumber> {
     const baseUnitallowance = await this._zeroEx.erc20Token.getProxyAllowanceAsync(tokenAddress, this.address);
-    return ZeroEx.toUnitAmount(baseUnitallowance, this._tokens.get(tokenAddress).decimals);
+    return ZeroEx.toUnitAmount(baseUnitallowance, (await this._tokens.get(tokenAddress)).decimals);
   }
 
   /**
@@ -172,7 +173,7 @@ export class BaseAccount {
       opts = {};
     }
 
-    const amt = ZeroEx.toBaseUnitAmount(amount, this._tokens.get(tokenAddress).decimals);
+    const amt = ZeroEx.toBaseUnitAmount(amount, (await this._tokens.get(tokenAddress)).decimals);
     const txHash = await this._zeroEx.erc20Token.setProxyAllowanceAsync(tokenAddress, this.address, amt, opts.transactionOpts);
     if (!opts.awaitTransactionMined) {
       return txHash;
