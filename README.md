@@ -1,4 +1,7 @@
-# Radar Relay SDK
+# DEPRECATED - Please use [0x Connect](https://0x.org/docs/connect#introduction)
+---
+
+## Radar Relay SDK
 
 The Radar Relay SDK is a software development kit that simplifies the interactions with [Radar Relay’s APIs](https://developers.radarrelay.com).
 
